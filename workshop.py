@@ -44,16 +44,16 @@ def download_plugins (output_dir, plugins, old_plugins):
             plugin['time_updated']:
                 # if plugin is already up-to-date just reccord as succeed
                 print("Plugin " + plugin['publishedfileid'] + \
-                        " already up-to-date")
+                        " already up-to-date ( " + plugin['title'] + " )")
                 succeed[plugin['publishedfileid']] = dict((k,plugin[k]) \
                     for k in ('title', 'time_updated') \
                     if k in plugin)
             else:
                 # if plugin not up-to-date or never download
                 try:
-                    name = plugin['publishedfileid'] + ".vpk"
+                    name = plugin['publishedfileid'] + " - " + plugin['title'] + ".zip"
                     print("Downloading " + name)
-                    path = os.path.join(output_dir, name)
+                    path = os.path.join(output_dir, name.translate(str.maketrans('','','\\/:*?"<>|')))
                     urllib.request.urlretrieve(plugin['file_url'], path)
                     print("Downloading complete")
                     succeed[plugin['publishedfileid']] = dict((k,plugin[k]) \
@@ -175,46 +175,36 @@ def init(argv):
     """
     error = 0
     output_dir = os.getcwd()
-    collections_id_list = []
+    plugins_id_list = []
+    collection_id = 0
     save_file = os.path.join(output_dir, "addons.lst")
     if len(argv) == 1 and not os.path.isfile(save_file):
         print("No save file found")
         usage(argv[0], 0)
     try:
-        opts, args = getopt.getopt(argv[1:],"ho:")
+        opts, args = getopt.getopt(argv[1:],"hc:o:")
     except getopt.GetoptError:
         usge(argv[0], 2)
     else:
         for opt, arg in opts:
-            if opt == 'h':
+            if opt == '-h':
                 usge(argv[0], 0)
+            elif opt == '-c':
+                error, plugins_id_list, valid_collections=get_plugins_id_from_collections_list([arg])
             elif opt == '-o':
                 output_dir = os.path.abspath(arg)
                 save_file = os.path.join(output_dir, "addons.lst")
         if not os.path.exists(output_dir):
             print(output_dir + ": path doesn't exist\nEnd of program")
             error += 1
-        collections_id_list = argv[len(opts) * 2 + 1:]
-    return error, output_dir, collections_id_list, save_file
+        plugins_id_list += argv[len(opts) * 2 + 1:]
+    return error, output_dir, plugins_id_list, save_file
 
 def main(argv):
     sleep = 15
-    error, output_dir, collections_id_list, save_file = init(argv)
+    error, output_dir, plugins_id_list, save_file = init(argv)
     if error == 0:
         saved_data = load_saved_data(save_file)
-        if 'collections' in saved_data:
-            if len(collections_id_list) == 0:
-                collections_id_list = saved_data['collections']
-            else:
-                collections_id_list += saved_data['collections']
-                collections_id_list = list(set(collections_id_list))
-        if len(collections_id_list) == 0:
-            print("No collection(s) id given and no collection(s) id found in " + save_file)
-            error = 1
-    if error == 0:
-        error, plugins_id_list, valid_collections = get_plugins_id_from_collections_list(collections_id_list)
-    if error == None:
-        saved_data['collections'] = valid_collections
         if 'plugins' in saved_data:
             old_plugins = saved_data['plugins']
             plugins_id_list += old_plugins.keys()
@@ -222,6 +212,10 @@ def main(argv):
         else:
             old_plugins = dict()
         saved_data['plugins'] = dict()
+        if len(plugins_id_list) == 0:
+            print("No collection(s) id given and no plugin(s) id found")
+            error = 1
+    if error == 0:
         error, plugins_info = get_plugins_info(plugins_id_list)
     if error == None:
         while len(plugins_info) > 0:
