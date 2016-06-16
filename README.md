@@ -9,18 +9,18 @@ will also download the content of the linked collection.
 ## Usage
 ### Command
 ```bash
-./workshop.py [-o <output_dir>] [-c <conllection_id>] [<plugin_id>]... plugin_id
+./workshop.py [-o <output_dir>] [-c <collection_id>]... [-d <plugin_id>]... [<plugin_id>]... <plugin_id>
 ```
 
-### Add a plugin
+### Add plugins
 Run the script with as many plugin_id as you want
 ```bash
 ./workshop.py <plugin_1_id> <plugin_2_id> ... <plugin_n_id>
 ```
 
-### Add a collection
+### Add collections
 ```bash
-./workshop.py -c <conllection_id>
+./workshop.py -c <conllection_1_id> -c <conllection_2_id> ... -c <conllection_n_id>
 ```
 
 ### Update plugins
@@ -32,9 +32,10 @@ Note that each time the script is call, the plugins will be updated if needed.
 If you already have the plugins download, the script will redownload everything
 the first time.
 
-### Remove plugin
-Edit the addons.lst file :
-    - remove the block begin with the plugin_id you don't want anymore
+### Remove plugins
+```bash
+./workshop.py -d <plugin_1_id> -d <plugin_2_id> ... -d <plugin_n_id>
+```
 You still need to remove manually the plugin (.zip) file.
 
 ## Save file
